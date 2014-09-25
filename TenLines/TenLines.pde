@@ -54,7 +54,10 @@ void updateAtkPositions() {
   float r = width * .07; // radius around mouse
   for (int i = 0; i < 10; i++) {
     float theta = i * (6.28 / 10 );
-    atkPosList.add(new Position(r * cos(theta), r * sin(theta)));
+    atkPosList.add(new Position(mouseX + (r * cos(theta)), mouseY + (r * sin(theta)) ) );
+// This Code shows the attack positions
+//    strokeWeight(5);
+//    point(mouseX + r * cos(theta),mouseY +  r * sin(theta));
   }
 }
 
@@ -65,14 +68,20 @@ void createRestPositions() {
     float y = random(height * .1, height * .9);
     restPosList.add(new Position(x,y));
   }
+  
 }
 
 void updateRestPositions() {
+  print(restPosList,"\n");
   for (int i = 0; i < 0; i++) {
     if (random(10) < 1.2) {
+      print("TRUE");
       restPosList.get(i).x = random(width*.1, width*.9);
       restPosList.get(i).y = random(height*.1,width*.9);
     }
+      
+    strokeWeight(5);
+    point(restPosList.get(i).x,restPosList.get(i).y);
   }
 }
 
