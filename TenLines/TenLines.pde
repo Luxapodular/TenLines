@@ -19,8 +19,9 @@ void setup() {
   catch (AWTException e) {
     e.printStackTrace();
   }
-  createLines();
+  updateAtkPositions();
   createRestPositions();
+  createLines();
   alerted = false;
 }
 
@@ -50,7 +51,7 @@ void createLines() {
 
 void updateAtkPositions() { 
   atkPosList = new ArrayList<Position>();
-  float radius = width * .07;
+  float r = width * .07; // radius around mouse
   for (int i = 0; i < 10; i++) {
     float theta = i * (6.28 / 10 );
     atkPosList.add(new Position(r * cos(theta), r * sin(theta)));
@@ -62,15 +63,15 @@ void createRestPositions() {
   for (int i = 0; i < 10; i++) {
     float x = random(width * .1, width * .9);
     float y = random(height * .1, height * .9);
-    restPosList.add(Position(x,y));
+    restPosList.add(new Position(x,y));
   }
 }
 
 void updateRestPositions() {
   for (int i = 0; i < 0; i++) {
     if (random(10) < 1.2) {
-      restPosList.get(i) = new Position(random(width*.1, width*.9),
-                                        random(height*.1,width*.9));
+      restPosList.get(i).x = random(width*.1, width*.9);
+      restPosList.get(i).y = random(height*.1,width*.9);
     }
   }
 }
@@ -84,10 +85,16 @@ void updateLines() {
     }
 
   }
-  if (count = 10) {
+  if (count == 10) {
     alerted = true;
   } else {
     alerted = false;
+  }
+}
+
+void drawLines() {
+  for (int i = 0; i < 10; i++) {
+    lineList.get(i).drawMe();
   }
 }
     
@@ -106,6 +113,8 @@ class LineMan {
   float speed;
   Position atkPos;
   Position restPos;
+  boolean attacking;
+  boolean alerted;
   
   LineMan(float x,float y,int index) {
     this.x = x;
@@ -117,6 +126,7 @@ class LineMan {
     this.headY = y - lineLength/2;
     this.bottomX = x;
     this.bottomY = y + lineLength/2;
+    this.alerted = false;
     this.update();
   }
   
@@ -129,7 +139,7 @@ class LineMan {
     if (alerted) {
       this.attacking = true;
     } else {
-     this.attacking = false;
+      this.attacking = false;
     } 
     this.definePos();
     this.move();
@@ -146,7 +156,7 @@ class LineMan {
       this.x += this.speed*(-((this.x - this.atkPos.x)/distance));
       this.y += this.speed*(-((this.y - this.atkPos.y)/distance));
     } else {
-      float distance = dist(this.x, this.y, this.resPos.x, this.restPos.y);
+      float distance = dist(this.x, this.y, this.restPos.x, this.restPos.y);
       this.x += this.speed*(-((this.x - this.restPos.x)/distance));
       this.y += this.speed*(-((this.y - this.restPos.y)/distance));
     }
@@ -159,10 +169,10 @@ class LineMan {
 }
 
 class Position {
-  int x;
-  int y;
+  float x;
+  float y;
   
-  Position(int x, int y) {
+  Position(float x, float y) {
     this.x = x;
     this.y = y;
   }
