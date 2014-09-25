@@ -1,17 +1,22 @@
 import java.awt.Robot;
 import java.awt.AWTException;
 import processing.serial.*;
+import java.awt.MouseInfo;
+import java.awt.Point;
 
 Robot rob;
 
-boolean alerted;
+boolean allAlerted;
 ArrayList<LineMan> lineList;
 ArrayList<Position> atkPosList;
 ArrayList<Position> restPosList;
 int lastUpdate;
+int timeWait;
+boolean go;
 
 void setup() {
   size(400,400);
+  cursor(CROSS);
   
   //Set up Bot to move mouse
   try {
@@ -23,13 +28,15 @@ void setup() {
   updateAtkPositions();
   createRestPositions();
   createLines();
-  alerted = false;
+  allAlerted = false;
   lastUpdate = 0;
+  go = false;
 }
 
 void draw() {
   background(255);
   updatePositions();
+  mouseChecks();
   updateLines();
   drawLines();
 }
@@ -41,6 +48,46 @@ void keyPressed() {
   rob.mouseMove(x +  width/2, y + height/2);
 }
 
+void mouseChecks() {
+  if (mouseInWindow()) {
+    alertClosest();
+  } else {
+    ignoreMouse();
+  }
+  checkAlerted();
+}
+
+boolean mouseInWindow() {
+  Point mousePos = (MouseInfo.getPointerInfo().getLocation());
+  int mWinX = mousePos.x;
+  int mWinY = mousePos.y;
+  int fX = frame.getLocation().x;
+  int fY = frame.getLocation().y;
+  if ((mWinX > fX && mWinX < fX + width) &&
+     (mWinY > fY && mWinY < fY + height)) {
+   return true;
+  } else {
+   return false;
+  } 
+}
+
+void alertClosest() {
+  int closest = 0;
+  int closestD = width;
+  for (int i = 0; i < 10; i++) {
+    if (dist(mouseX, mouseY, lineList.get(i).x, lineList.get(i).y) < closestD) {
+      closest = i;
+    }
+  }
+  lineList.get(closest).alerted = true;
+}
+
+void ignoreMouse() {
+  for (int i = 0; i < 10; i++) {
+    lineList.get(i).alerted = false;
+  }
+}
+
 void updatePositions() {
   updateAtkPositions();
   if ((millis() - lastUpdate)/1000.0 >= 1.5) {
@@ -48,12 +95,29 @@ void updatePositions() {
     updateRestPositions();
   }
 }
+
+void checkAlerted() {
+  boolean check = true;
+  for (int i = 0; i < 10; i++) {
+    if (lineList.get(i).alerted == false) {
+      check = false;
+      allAlerted = false;
+      timeWait = 0;
+      go = false;
+      break;
+    }
+  }
+  if ((check)) {
+      allAlerted = true;
+  }
+}
+
+      
 void createLines() {
   lineList = new ArrayList<LineMan>();
   for (int i = 0; i < 10; i++) {
     float x = random(width*.1, width*.9);
     float y = random(height * .1, height * .9);
-    print(i);
     lineList.add(new LineMan(x,y,i));
   }
 }
@@ -65,8 +129,8 @@ void updateAtkPositions() {
     float theta = i * (6.28 / 10 );
     atkPosList.add(new Position(mouseX + (r * cos(theta)), mouseY + (r * sin(theta)) ) );
 // This Code shows the attack positions
-    strokeWeight(5);
-    point(mouseX + r * cos(theta),mouseY +  r * sin(theta));
+//    strokeWeight(5);
+//    point(mouseX + r * cos(theta),mouseY +  r * sin(theta));
   }
 }
 
@@ -96,12 +160,6 @@ void updateLines() {
     if (lineList.get(i).alerted){
       count += 1;
     }
-
-  }
-  if (count == 10) {
-    alerted = true;
-  } else {
-    alerted = false;
   }
 }
 
@@ -154,22 +212,26 @@ class LineMan {
   }
   
   void update() {
-    if (alerted) {
+    if ((allAlerted)) {
       this.attacking = true;
     } else {
       this.attacking = false;
     } 
     this.sinCurve += .1;
     this.sinCurve = this.sinCurve % 6.28;
-    int coEff;
-    if (this.alerted) {
-      coEff = 1; //Slow
+    float coEff;
+    if ((this.alerted) && (!this.attacking)) {
+      coEff = .2; //Slow
     } else if ((this.attacking) && (!this.inPlace)){
       coEff = 10; //Fast
     } else if ((this.attacking) && (this.inPlace)) {
       coEff = 2; //Sort of Slow
     } else {
       coEff = 5; //No one on screen
+    }
+    
+    if (this.alerted) {
+      this.alertBuddy();
     }
     
     // CoEff... offset by height of window... sin wave
@@ -212,6 +274,12 @@ class LineMan {
     this.headY = (this.y - lineLength/2) + this.yChange;
     this.bottomX = this.x;
     this.bottomY = this.y + lineLength/2 + this.yChange;
+  }
+  
+  void alertBuddy() {
+    if (random(10) < .5) {
+      lineList.get((int)random(10)).alerted = true;
+    }
   }
     
 }
