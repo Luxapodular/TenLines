@@ -12,11 +12,11 @@ ArrayList<Position> atkPosList;
 ArrayList<Position> restPosList;
 int lastUpdate;
 int timeWait;
-boolean go;
+boolean oneAlerted;
 
 void setup() {
   size(400,400);
-  cursor(CROSS);
+  cursor(HAND);
   
   //Set up Bot to move mouse
   try {
@@ -30,7 +30,7 @@ void setup() {
   createLines();
   allAlerted = false;
   lastUpdate = 0;
-  go = false;
+  oneAlerted = false;
 }
 
 void draw() {
@@ -49,9 +49,11 @@ void keyPressed() {
 }
 
 void mouseChecks() {
-  if (mouseInWindow()) {
+  if (mouseInWindow() && !oneAlerted) {
+    oneAlerted = true;
     alertClosest();
-  } else {
+  } else if (!mouseInWindow()) {
+    oneAlerted = false;
     ignoreMouse();
   }
   checkAlerted();
@@ -102,8 +104,6 @@ void checkAlerted() {
     if (lineList.get(i).alerted == false) {
       check = false;
       allAlerted = false;
-      timeWait = 0;
-      go = false;
       break;
     }
   }
@@ -189,6 +189,10 @@ class LineMan {
   boolean inPlace;
   float yChange;
   float sinCurve;
+  float sinCurveChange;
+  float cosCurve;
+  float cosCurveChange;
+  float xChange;
   
   LineMan(float x,float y,int index) {
     this.x = x;
@@ -202,8 +206,11 @@ class LineMan {
     this.bottomY = y + lineLength/2;
     this.alerted = false;
     this.update();
+    this.sinCurveChange = .1;
+    this.cosCurveChange = 0;
     this.index = index;
     this.sinCurve = random(0, 6.28);
+    this.cosCurve = random(0, 6.28);
   }
   
   void drawMe() {
@@ -217,17 +224,30 @@ class LineMan {
     } else {
       this.attacking = false;
     } 
-    this.sinCurve += .1;
+    
+    this.sinCurve += this.sinCurveChange;
     this.sinCurve = this.sinCurve % 6.28;
+    this.cosCurve += this.cosCurveChange;
+    this.cosCurve = this.cosCurve % 6.28;
     float coEff;
+    float xCoEff;
+    
     if ((this.alerted) && (!this.attacking)) {
       coEff = .2; //Slow
+      xCoEff = 2;
+      this.cosCurveChange = .3; //Side to Side Motion
     } else if ((this.attacking) && (!this.inPlace)){
       coEff = 10; //Fast
+      xCoEff = 2;
+      this.cosCurveChange = .3; //Side to Side Motion;
     } else if ((this.attacking) && (this.inPlace)) {
       coEff = 2; //Sort of Slow
+      xCoEff = 2;
+      this.cosCurveChange = .1; //Side to Side Motion;
     } else {
       coEff = 5; //No one on screen
+      xCoEff = 0;
+     this.cosCurveChange = 0; //Side to Side Motion
     }
     
     if (this.alerted) {
@@ -236,6 +256,7 @@ class LineMan {
     
     // CoEff... offset by height of window... sin wave
     this.yChange = coEff * (height / (float)400) * sin(this.sinCurve); 
+    this.xChange = xCoEff * (width / (float)400) * (cos(this.cosCurve));
     this.definePos();
     this.move();
   }
@@ -270,9 +291,9 @@ class LineMan {
       this.x += this.speed*(-((this.x - this.restPos.x)/distance));
       this.y += this.speed*(-((this.y - this.restPos.y)/distance));
     }
-    this.headX = this.x; 
+    this.headX = this.x + this.xChange; 
     this.headY = (this.y - lineLength/2) + this.yChange;
-    this.bottomX = this.x;
+    this.bottomX = this.x + this.xChange;
     this.bottomY = this.y + lineLength/2 + this.yChange;
   }
   
