@@ -10,6 +10,7 @@ boolean allAlerted;
 ArrayList<LineMan> lineList;
 ArrayList<Position> atkPosList;
 ArrayList<Position> restPosList;
+ArrayList<Position> mouseHits;
 int lastUpdate;
 int timeWait;
 boolean oneAlerted;
@@ -25,12 +26,14 @@ void setup() {
   catch (AWTException e) {
     e.printStackTrace();
   }
+  mouseHits = new ArrayList<Position>();
   updateAtkPositions();
   createRestPositions();
   createLines();
   allAlerted = false;
   lastUpdate = 0;
   oneAlerted = false;
+  
 }
 
 void draw() {
